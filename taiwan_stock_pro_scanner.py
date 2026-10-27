@@ -3,35 +3,64 @@ import pandas as pd
 import requests
 import twstock
 
-# 核心監控清單 (半導體與 AI 供應鏈)
+# 台灣 50 (0050) 全成分股代號清單
 WATCH_LIST = [
-    '2330',  # 台積電
-    '2317',  # 鴻海
-    '2454',  # 聯發科
-    '2382',  # 廣達
-    '2308',  # 台達電
-    '3711',  # 日月光投控
-    '3034',  # 聯詠
-    '2379',  # 瑞昱
-    '3231',  # 緯創
-    '6669',  # 緯穎
-    '3661',  # 世芯-KY
-    '3443',  # 創意
-    '3017',  # 奇鋐
-    '8210',  # 勤誠
-    '3260',  # 威剛
-    '2408',  # 南亞科
+    '1101',
+    '1216',
+    '1301',
+    '1303',
+    '1326',
+    '1402',
+    '1504',
+    '2002',
+    '2207',
+    '2301',
+    '2303',
+    '2308',
+    '2317',
+    '2327',
+    '2330',
+    '2357',
+    '2379',
+    '2382',
+    '2395',
+    '2408',
+    '2412',
+    '2454',
+    '2603',
+    '2609',
+    '2615',
+    '2801',
+    '2880',
+    '2881',
+    '2882',
+    '2884',
+    '2885',
+    '2886',
+    '2887',
+    '2891',
+    '2892',
+    '2912',
+    '3008',
+    '3034',
+    '3037',
+    '3045',
+    '3231',
+    '3661',
+    '3711',
+    '4904',
+    '5871',
+    '5880',
+    '6505',
+    '6669',
+    '9910',
 ]
 
 
 def check_market_settlement_risk():
-  """動態偵測台股選擇權結算日風控閘門
-
-  台股每週三為週選擇權結算日，尾盤容易受造市商避險買賣盤影響出現虛假波動。
-  """
+  """動態偵測台股選擇權結算日風控閘門"""
   today = datetime.datetime.now()
-  is_wednesday = today.weekday() == 2  # 0=週一, 2=週三
-  return is_wednesday
+  return today.weekday() == 2  # 週三為結算日
 
 
 def get_institutional_data():
@@ -60,12 +89,15 @@ def run_master_scanner():
   current_time_str = now.strftime('%Y-%m-%d %H:%M')
   is_settlement_day = check_market_settlement_risk()
 
-  print(f'=== 【短線波段 SOP 頂級風控智慧掃描】 執行時間: {current_time_str} ===')
+  print(
+      f'=== 【台灣50波段 SOP 旗艦風控掃描】 執行時間: {current_time_str} ==='
+  )
   if is_settlement_day:
     print(
-        '⚠️ 【風控警報】今天是週三選擇權結算日！尾盤現貨權值股易受造市商對沖影響'
-        '，突破訊號請提高警覺。'
+        '⚠️ 【風控警報】今天是週三選擇權結算日！權值股尾盤易受造市商對沖影響'
+        '，突破追價請提高警覺。'
     )
+  print(f'本次掃描目標：台灣50（0050）共 {len(WATCH_LIST)} 檔核心權值與產業龍頭')
   print('-' * 70)
 
   current_year = now.year
@@ -128,18 +160,16 @@ def run_master_scanner():
       is_bearish_candle = close < open_p
 
       # 3. 智慧評分與風控模型
-      score = 70  # 基礎分（符合均線糾結）
+      score = 70  # 基礎分
 
-      # 糾結度越緊密加分越多
       if spread_pct < 0.025:
-        score += 10
+        score += 10  # 糾結度極度緊密加分
 
-      # 量價狀態與陷阱防護
       status = '👀 【盤整中】均線糾結觀察區'
       if vol_ratio >= 1.5 and close > ma20:
         if is_upper_shadow_trap or is_bearish_candle:
           status = '⚠️ 【高度警戒】爆量假突破/上影線出貨'
-          score -= 30  # 嚴重扣分
+          score -= 30
         else:
           status = '🔥 【強勢發動】扎實突破 + 爆量'
           score += 20
@@ -162,7 +192,6 @@ def run_master_scanner():
         chip_status = '🔴 雙法人調節賣超'
         score -= 15
 
-      # 若逢週三結算日，對突破型態進行風控懲罰
       if is_settlement_day and '強勢發動' in status:
         score -= 10
         status += ' (⚠️ 結算日追價風險)'
